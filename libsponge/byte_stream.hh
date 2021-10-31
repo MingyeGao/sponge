@@ -2,6 +2,7 @@
 #define SPONGE_LIBSPONGE_BYTE_STREAM_HH
 
 #include <string>
+#include <vector>
 
 //! \brief An in-order byte stream.
 
@@ -18,10 +19,19 @@ class ByteStream {
     // different approaches.
 
     bool _error{};  //!< Flag indicating that the stream suffered an error.
+    std::vector<char> buffer;
+    int write_offset, read_offset;
+    int size = 0;
+    int total_read, total_written;
+    bool input_is_end;
+    // whether write_offset return to the beginning and overwrite
+    bool is_offset_overwrite;
 
   public:
     //! Construct a stream with room for `capacity` bytes.
-    ByteStream(const size_t capacity);
+    ByteStream(const size_t capacity):buffer(std::vector<char>(capacity)),
+    write_offset(0), read_offset(0), size(0), total_read(0), total_written(0), 
+    input_is_end(false), is_offset_overwrite(false){}
 
     //! \name "Input" interface for the writer
     //!@{
