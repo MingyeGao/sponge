@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <cstring>
+#include <iostream>
 #include "byte_stream.hh"
 
 // Dummy implementation of a flow-controlled in-memory byte stream.
@@ -78,7 +79,7 @@ void ByteStream::pop_output(const size_t len) {
     int pop_len = static_cast<int>(len)>size?size:len;
     read_offset += pop_len;
     if(read_offset >= static_cast<int>(buffer.size())){
-        assert(is_offset_overwrite);
+        //assert(is_offset_overwrite);
         read_offset -= buffer.size();
         is_offset_overwrite = false;
     }
@@ -92,7 +93,6 @@ void ByteStream::pop_output(const size_t len) {
 std::string ByteStream::read(const size_t len) {
     std::string result = this->peek_output(len);
     this->pop_output(len);
-
     return result;
 }
 
@@ -104,7 +104,9 @@ size_t ByteStream::buffer_size() const { return size; }
 
 bool ByteStream::buffer_empty() const { return size == 0; }
 
-bool ByteStream::eof() const { return input_is_end && read_offset == write_offset; }
+bool ByteStream::eof() const { 
+    return input_is_end && read_offset == write_offset; 
+}
 
 size_t ByteStream::bytes_written() const { return total_written; }
 
