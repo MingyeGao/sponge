@@ -6,34 +6,35 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <memory>
 
 class Segment {
 public:
   int first_data_index_in_stream;
   int last_data_index_in_stream;
-  Segment *prev;
-  Segment *next;
+  std::shared_ptr<Segment> prev;
+  std::shared_ptr<Segment> next;
   Segment(int first_data_index, int last_data_index):first_data_index_in_stream(first_data_index), last_data_index_in_stream(last_data_index),
-    prev(nullptr), next(nullptr){}
-  bool covers(Segment *s);
-  bool overlaps(Segment *s);
-  bool left_adjacent(Segment *s);
-  bool right_adjacent(Segment *s);
-  bool lefter_than(Segment *s);
-  bool rightter_than(Segment *s);
-  Segment* get_lefter_part_than(Segment *s);
-  Segment* get_rightter_part_than(Segment *s);
+    prev(std::shared_ptr<Segment>(nullptr)), next(std::shared_ptr<Segment>(nullptr)){}
+  bool covers(std::shared_ptr<Segment> s);
+  bool overlaps(std::shared_ptr<Segment> s);
+  bool left_adjacent(std::shared_ptr<Segment> s);
+  bool right_adjacent(std::shared_ptr<Segment> s);
+  bool lefter_than(std::shared_ptr<Segment> s);
+  bool rightter_than(std::shared_ptr<Segment> s);
+  std::shared_ptr<Segment> get_lefter_part_than(std::shared_ptr<Segment> s);
+  std::shared_ptr<Segment> get_rightter_part_than(std::shared_ptr<Segment> s);
   int size();
 };
 
 class SegmentList {
 public:
-  Segment *head;
-  Segment* combines_element_and_left(Segment *s);
-  Segment *first_element();
-  void insert_after(Segment *target, Segment *new_segment);
-  void insert_before(Segment *target, Segment *new_segment);
-  SegmentList(): head(new Segment(0, 0)){}
+  std::shared_ptr<Segment> head;
+  std::shared_ptr<Segment> combines_element_and_left(std::shared_ptr<Segment> s);
+  std::shared_ptr<Segment> first_element();
+  void insert_after(std::shared_ptr<Segment> target, std::shared_ptr<Segment> new_segment);
+  void insert_before(std::shared_ptr<Segment> target, std::shared_ptr<Segment> new_segment);
+  SegmentList(): head(std::make_shared<Segment>(0, 0)){}
   void drop_first_element();
 };
 
@@ -44,7 +45,6 @@ public:
   int base_index;
   bool is_eof_set;
   int stream_eof_index;
-  int upper_position();
   int upper_index();
   int write(const std::string data, int start_index);
   int position_at_index(int index);
@@ -61,7 +61,6 @@ public:
   bool can_read();
   int write_data(const std::string &data, const uint64_t index);
   int write_data_within_index(const std::string &data, const uint64_t data_start_index, int segment_start_index, int segment_end_index);
-  int unassembled_bytes();
   int base_index();
   int upper_index();
   int available_bytes_for_read();

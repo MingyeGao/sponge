@@ -22,8 +22,6 @@ StreamReassembler::StreamReassembler(const size_t capacity):_output(capacity), _
 //! possibly out-of-order, from the logical stream, and assembles any newly
 //! contiguous substrings and writes them into the output stream in order.
 void StreamReassembler::push_substring(const string &data, const size_t index, const bool eof) {
-    std::cout<<"data.size()="<<data.size()<<","<<"index="<<index<<"\n";
-
     if(_output.eof()){
         return;
     }
@@ -33,14 +31,6 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
         buffer.set_eof_index(end_index);
     }
 
-    
-    // data is outside the buffer range
-    // if(static_cast<int>(index) > buffer.upper_index()){
-    //     return;
-    // }
-    // if(end_index < buffer.base_index()){
-    //     return;
-    // }
 
     if(is_data_in_range(static_cast<int>(index), end_index)){
         int stream_base_index = unassembled_base_index();
@@ -89,43 +79,43 @@ bool StreamReassembler::is_data_in_range(int first_data_index, int last_data_ind
 
 
 //! Segment Methods
-bool Segment::covers(Segment *s) {
+bool Segment::covers(std::shared_ptr<Segment> s) {
     return first_data_index_in_stream <= s->first_data_index_in_stream && last_data_index_in_stream >= s->last_data_index_in_stream;
 }
 
-bool Segment::overlaps(Segment *s) {
+bool Segment::overlaps(std::shared_ptr<Segment> s) {
     return (first_data_index_in_stream >= s->first_data_index_in_stream && first_data_index_in_stream <= s->last_data_index_in_stream) || 
     (last_data_index_in_stream <= s->last_data_index_in_stream && last_data_index_in_stream >= s->first_data_index_in_stream);
 }
 
-bool Segment::left_adjacent(Segment *s) {
+bool Segment::left_adjacent(std::shared_ptr<Segment> s) {
     return last_data_index_in_stream == (s->first_data_index_in_stream - 1);
 }
 
-bool Segment::right_adjacent(Segment *s) {
+bool Segment::right_adjacent(std::shared_ptr<Segment> s) {
     return first_data_index_in_stream == (s->last_data_index_in_stream + 1);
 }
 
-bool Segment::lefter_than(Segment *s) {
+bool Segment::lefter_than(std::shared_ptr<Segment> s) {
     return last_data_index_in_stream < s->first_data_index_in_stream;
 }
 
-bool Segment::rightter_than(Segment *s) {
+bool Segment::rightter_than(std::shared_ptr<Segment> s) {
     return first_data_index_in_stream > s->last_data_index_in_stream;
 }
 
-Segment* Segment::get_lefter_part_than(Segment *s) {
+std::shared_ptr<Segment> Segment::get_lefter_part_than(std::shared_ptr<Segment> s) {
     if(first_data_index_in_stream >= s->first_data_index_in_stream){
         return nullptr;
     }
-    return new Segment(first_data_index_in_stream, s->first_data_index_in_stream - 1);
+    return std::make_shared<Segment>(first_data_index_in_stream, s->first_data_index_in_stream - 1);
 }
 
-Segment* Segment::get_rightter_part_than(Segment *s) {
+std::shared_ptr<Segment> Segment::get_rightter_part_than(std::shared_ptr<Segment>s) {
     if(last_data_index_in_stream <= s->last_data_index_in_stream) {
         return nullptr;
     }
-    return new Segment(s->last_data_index_in_stream + 1, last_data_index_in_stream);
+    return std::make_shared<Segment>(s->last_data_index_in_stream + 1, last_data_index_in_stream);
 }
 
 int Segment::size() {
@@ -133,7 +123,7 @@ int Segment::size() {
 }
 
 // SegmentList Methods
-Segment* SegmentList::first_element() {
+std::shared_ptr<Segment> SegmentList::first_element() {
     return head->next;
 }
 
@@ -146,24 +136,14 @@ int ResembleBuffer::write_data_within_index(const std::string &data, const uint6
     return segment_end_index - segment_start_index + 1;
 }
 
-int ResembleBuffer::unassembled_bytes() {
-    int bytes = 0;
-    Segment *current = segment_list.first_element();
-    while(current){
-        bytes += current->size();
-        current = current->next;
-    }
-    return bytes;
-}
-
 int ResembleBuffer::write_data(const std::string &data, const uint64_t start_index){
     if(data.size() == 0){
         return 0;
     }
-    Segment *data_segment = new Segment(start_index, start_index + data.size() - 1);
-    Segment *current_segment_in_list = segment_list.first_element();
-    Segment *prev_segment_in_list = segment_list.head;
-    Segment *next_segment_in_list = nullptr;
+    std::shared_ptr<Segment> data_segment = std::make_shared<Segment>(start_index, start_index + data.size() - 1);
+    std::shared_ptr<Segment> current_segment_in_list = segment_list.first_element();
+    std::shared_ptr<Segment> prev_segment_in_list = segment_list.head;
+    std::shared_ptr<Segment> next_segment_in_list = nullptr;
 
     int total_write_num = 0;
     
@@ -175,7 +155,7 @@ int ResembleBuffer::write_data(const std::string &data, const uint64_t start_ind
             return total_write_num;
         }
 
-        Segment *left_part = nullptr, *right_part = nullptr;
+        std::shared_ptr<Segment> left_part, right_part;
         if(current_segment_in_list->overlaps(data_segment)){
             left_part = data_segment->get_lefter_part_than(current_segment_in_list);
             right_part = data_segment->get_rightter_part_than(current_segment_in_list);
@@ -217,14 +197,6 @@ int ResembleBuffer::write_data(const std::string &data, const uint64_t start_ind
         }
         total_write_num += data_segment->size();
     }
-
-    Segment *tmpCurrentNode = segment_list.head;
-
-    while(tmpCurrentNode){
-        std::cout<<"("<<tmpCurrentNode->first_data_index_in_stream<<", "<<tmpCurrentNode->last_data_index_in_stream<<")"<<"->";
-        tmpCurrentNode = tmpCurrentNode->next;
-    }
-    std::cout<<"\n";
 
     return total_write_num;
 }
@@ -270,11 +242,11 @@ bool ResembleBuffer::is_eof_reached(){
 }
 
 // SegmentList Methods
-Segment* SegmentList::combines_element_and_left(Segment *s){
+std::shared_ptr<Segment> SegmentList::combines_element_and_left(std::shared_ptr<Segment> s){
     assert(s->prev != head);
     assert(s->first_data_index_in_stream == (s->prev->last_data_index_in_stream + 1));
-    Segment *s_prev = s->prev;
-    Segment *ns = new Segment(s_prev->first_data_index_in_stream, s->last_data_index_in_stream);
+    std::shared_ptr<Segment> s_prev = s->prev;
+    std::shared_ptr<Segment> ns = std::make_shared<Segment>(s_prev->first_data_index_in_stream, s->last_data_index_in_stream);
     s_prev->prev->next = ns;
     ns->prev = s_prev->prev;
     ns->next = s->next;
@@ -285,8 +257,8 @@ Segment* SegmentList::combines_element_and_left(Segment *s){
     return ns;
 }
 
-void SegmentList::insert_after(Segment *target, Segment *new_segment) {
-    Segment *target_next = target->next;
+void SegmentList::insert_after(std::shared_ptr<Segment> target, std::shared_ptr<Segment> new_segment) {
+    std::shared_ptr<Segment> target_next = target->next;
     target->next = new_segment;
     new_segment->prev = target;
     if(target_next){
@@ -295,8 +267,8 @@ void SegmentList::insert_after(Segment *target, Segment *new_segment) {
     new_segment->next = target_next;
 }
   
-void SegmentList::insert_before(Segment *target, Segment *new_segment){
-    Segment *target_prev = target->prev;
+void SegmentList::insert_before(std::shared_ptr<Segment> target, std::shared_ptr<Segment> new_segment){
+    std::shared_ptr<Segment> target_prev = target->prev;
     target_prev->next = new_segment;
     new_segment->prev = target_prev;
     new_segment->next = target;
@@ -315,14 +287,6 @@ void SegmentList::drop_first_element(){
 
 // |----------|------------------------|
 //          base
-int RotateBuffer::upper_position() {
-    int upper = base_position-1;
-    if(upper < 0){
-        upper += buffer.size();
-    }
-    return upper;
-}
-
 int RotateBuffer::upper_index() {
     int upper_index = base_index + buffer.size() - 1;
     if(is_eof_set && stream_eof_index < upper_index){
