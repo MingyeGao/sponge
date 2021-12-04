@@ -227,7 +227,7 @@ void ResembleBuffer::set_eof_index(int eof_index){
     buffer.set_eof_index(eof_index);
 }
 
-bool ResembleBuffer::is_data_within_buffer_range(int data_start_index, int data_end_index){
+bool ResembleBuffer::is_data_within_buffer_range(uint64_t data_start_index, uint64_t data_end_index){
     if(data_start_index > buffer.upper_index()){
         return false;
     }
@@ -287,7 +287,7 @@ void SegmentList::drop_first_element(){
 
 // |----------|------------------------|
 //          base
-int RotateBuffer::upper_index() {
+uint64_t RotateBuffer::upper_index() {
     int upper_index = base_index + buffer.size() - 1;
     if(is_eof_set && stream_eof_index < upper_index){
         upper_index = stream_eof_index;
@@ -354,7 +354,7 @@ int RotateBuffer::write(const std::string data, int start_index) {
 }
 
 // Caller should make sure base_index <= index <= upper_index
-int RotateBuffer::position_at_index(int index){
+int RotateBuffer::position_at_index(uint64_t index){
     assert(index >= base_index && index <= upper_index());
     int position = base_position + (index - base_index);
     if(position >= static_cast<int>(buffer.size())){

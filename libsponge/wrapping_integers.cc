@@ -1,5 +1,4 @@
 #include "wrapping_integers.hh"
-#include <iostream>
 
 // Dummy implementation of a 32-bit wrapping integer
 
@@ -40,8 +39,6 @@ uint64_t unwrap(WrappingInt32 n, WrappingInt32 isn, uint64_t checkpoint) {
     uint64_t m = (checkpoint - static_cast<uint64_t>(relative_steps))/(1ul<<32);
     uint64_t candidate1 = relative_steps + m * (1ul<<32);
     uint64_t candidate2 = relative_steps + (m + 1) * (1ul<<32);
-    std::cout<<"candidate1="<<candidate1<<"\n";
-    std::cout<<"candidate2="<<candidate2<<"\n";
     return (candidate2-checkpoint)>(checkpoint-candidate1)?candidate1:candidate2;
 
     // DUMMY_CODE(n, isn, checkpoint);

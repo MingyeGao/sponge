@@ -10,11 +10,11 @@
 
 class Segment {
 public:
-  int first_data_index_in_stream;
-  int last_data_index_in_stream;
+  uint64_t first_data_index_in_stream;
+  uint64_t last_data_index_in_stream;
   std::shared_ptr<Segment> prev;
   std::shared_ptr<Segment> next;
-  Segment(int first_data_index, int last_data_index):first_data_index_in_stream(first_data_index), last_data_index_in_stream(last_data_index),
+  Segment(uint64_t first_data_index, uint64_t last_data_index):first_data_index_in_stream(first_data_index), last_data_index_in_stream(last_data_index),
     prev(std::shared_ptr<Segment>(nullptr)), next(std::shared_ptr<Segment>(nullptr)){}
   bool covers(std::shared_ptr<Segment> s);
   bool overlaps(std::shared_ptr<Segment> s);
@@ -42,12 +42,12 @@ class RotateBuffer {
 public:
   std::vector<char> buffer;
   int base_position;
-  int base_index;
+  uint64_t base_index;
   bool is_eof_set;
   int stream_eof_index;
-  int upper_index();
+  uint64_t upper_index();
   int write(const std::string data, int start_index);
-  int position_at_index(int index);
+  int position_at_index(uint64_t index);
   std::string read(int bytes_num);
   RotateBuffer(int capacity): buffer(std::vector<char>(capacity)), base_position(0), base_index(0), 
     is_eof_set(false), stream_eof_index(-1){}
@@ -67,7 +67,7 @@ public:
   ResembleBuffer(int capacity): buffer(RotateBuffer(capacity)), segment_list(SegmentList()){}
   std::string read(int byte_num);
   void set_eof_index(int eof_index);
-  bool is_data_within_buffer_range(int data_start_index, int data_end_index);
+  bool is_data_within_buffer_range(uint64_t data_start_index, uint64_t data_end_index);
   bool is_eof_reached();
 };
 
