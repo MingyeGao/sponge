@@ -1,4 +1,5 @@
 #include "wrapping_integers.hh"
+#include <iostream>
 
 // Dummy implementation of a 32-bit wrapping integer
 
@@ -14,8 +15,10 @@ using namespace std;
 //! \param n The input absolute 64-bit sequence number
 //! \param isn The initial sequence number
 WrappingInt32 wrap(uint64_t n, WrappingInt32 isn) {
-    DUMMY_CODE(n, isn);
-    return WrappingInt32{0};
+    uint64_t last_32_bit = n & UINT32_MAX;
+    return isn + static_cast<uint32_t>(last_32_bit);
+    // DUMMY_CODE(n, isn);
+    // return WrappingInt32{0};
 }
 
 //! Transform a WrappingInt32 into an "absolute" 64-bit sequence number (zero-indexed)
@@ -29,6 +32,18 @@ WrappingInt32 wrap(uint64_t n, WrappingInt32 isn) {
 //! and the other stream runs from the remote TCPSender to the local TCPReceiver and
 //! has a different ISN.
 uint64_t unwrap(WrappingInt32 n, WrappingInt32 isn, uint64_t checkpoint) {
-    DUMMY_CODE(n, isn, checkpoint);
-    return {};
+    uint32_t relative_steps = n.raw_value() - isn.raw_value();
+    if(checkpoint <= static_cast<uint64_t>(relative_steps)){
+        return static_cast<uint64_t>(relative_steps);
+    }
+
+    uint64_t m = (checkpoint - static_cast<uint64_t>(relative_steps))/(1ul<<32);
+    uint64_t candidate1 = relative_steps + m * (1ul<<32);
+    uint64_t candidate2 = relative_steps + (m + 1) * (1ul<<32);
+    std::cout<<"candidate1="<<candidate1<<"\n";
+    std::cout<<"candidate2="<<candidate2<<"\n";
+    return (candidate2-checkpoint)>(checkpoint-candidate1)?candidate1:candidate2;
+
+    // DUMMY_CODE(n, isn, checkpoint);
+    // return {};
 }
